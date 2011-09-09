@@ -32,7 +32,7 @@ L<DateTime>.  See <MongoDB::DataTypes> for more information.
 
 =cut
 
-use Any::Moose;
+use MongoDB::Base -base;
 
 =head1 ATTRIBUTES
 
@@ -42,11 +42,7 @@ Seconds since epoch.
 
 =cut
 
-has sec => (
-    is       => 'ro',
-    isa      => 'Int',
-    required => 1,
-);
+has sec => sub{undef};
 
 =head2 inc
 
@@ -54,10 +50,6 @@ Incrementing field.
 
 =cut
 
-has inc => (
-    is       => 'ro',
-    isa      => 'Int',
-    required => 1,
-);
+has inc => sub{undef};
 
 1;

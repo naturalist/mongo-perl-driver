@@ -44,15 +44,12 @@ Core documentation on collections: L<http://dochub.mongodb.org/core/collections>
 
 =cut
 
+use MongoDB::Base -base;
 use Tie::IxHash;
-use Any::Moose;
 use boolean;
+use Carp;
 
-has _database => (
-    is       => 'ro',
-    isa      => 'MongoDB::Database',
-    required => 1,
-);
+has _database => sub{undef};
 
 =head1 ATTRIBUTES
 
@@ -62,11 +59,7 @@ The name of the collection.
 
 =cut
 
-has name => (
-    is       => 'ro',
-    isa      => 'Str',
-    required => 1,
-);
+has name => sub{undef};
 
 =head2 full_name
 
@@ -75,19 +68,12 @@ in.
 
 =cut
 
-has full_name => (
-    is      => 'ro',
-    isa     => 'Str',
-    lazy    => 1,
-    builder => '_build_full_name',
-);
-
-sub _build_full_name {
+has full_name => sub {
     my ($self) = @_;
     my $name    = $self->name;
     my $db_name = $self->_database->name;
     return "${db_name}.${name}";
-}
+};
 
 
 sub AUTOLOAD {
@@ -99,6 +85,8 @@ sub AUTOLOAD {
 
     return $self->_database->get_collection($self->name.'.'.$coll);
 }
+
+sub DESTROY {}
 
 =head1 STATIC METHODS
 
@@ -725,8 +713,6 @@ sub drop {
 
 
 
-no Any::Moose;
-__PACKAGE__->meta->make_immutable;
 
 1;
 

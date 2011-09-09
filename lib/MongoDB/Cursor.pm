@@ -18,9 +18,10 @@ package MongoDB::Cursor;
 our $VERSION = '0.45';
 
 # ABSTRACT: A cursor/iterator for Mongo query results
-use Any::Moose;
+use MongoDB::Base -base;
 use boolean;
 use Tie::IxHash;
+use Carp;
 
 =head1 NAME
 
@@ -84,49 +85,19 @@ after the database is queried.
 
 =cut
 
-has started_iterating => (
-    is => 'rw',
-    isa => 'Bool',
-    required => 1,
-    default => 0,
-);
+has started_iterating => 0;
 
-has _connection => (
-    is => 'ro',
-    isa => 'MongoDB::Connection',
-    required => 1,
-);
+has _connection => sub { undef };
 
-has _ns => (
-    is => 'ro',
-    isa => 'Str',
-    required => 1,
-);
+has _ns => sub { undef };
 
-has _query => (
-    is => 'rw',
-    required => 1,
-);
+has _query => sub { undef };
 
-has _fields => (
-    is => 'rw',
-    isa => 'HashRef',
-    required => 0,
-);
+has _fields => sub { undef };
 
-has _limit => (
-    is => 'rw',
-    isa => 'Int',
-    required => 0,
-    default => 0,
-);
+has _limit => 0;
 
-has _skip => (
-    is => 'rw',
-    isa => 'Int',
-    required => 0,
-    default => 0,
-);
+has _skip => 0;
 
 =head2 immortal
 
@@ -150,12 +121,7 @@ See L<MongoDB::Connection/query_timeout>.
 
 =cut
 
-has immortal => (
-    is => 'rw',
-    isa => 'Bool',
-    required => 0,
-    default => 0,
-);
+has immortal => 0;
 
 =head2 tailable
 
@@ -171,12 +137,7 @@ Boolean value, defaults to 0.
 
 =cut
 
-has tailable => (
-    is => 'rw',
-    isa => 'Bool',
-    required => 0,
-    default => 0,
-);
+has tailable => 0;
 
 =head2 partial
 
@@ -187,12 +148,7 @@ Boolean value, defaults to 0.
 
 =cut
 
-has partial => (
-    is => 'rw',
-    isa => 'Bool',
-    required => 0,
-    default => 0,
-);
+has partial => 0;
 
 =head2 slave_okay
 
@@ -204,26 +160,12 @@ Boolean value, defaults to 0.
 
 =cut
 
-has slave_okay => (
-    is => 'rw',
-    isa => 'Bool',
-    required => 0,
-    default => 0,
-);
-
+has slave_okay => 0;
 
 # stupid hack for inconsistent database handling of queries
-has _grrrr => (
-    is      => 'rw',
-    isa     => 'Bool',
-    default => 0,
-);
+has _grrrr => 0;
 
-has _request_id => (
-    is      => 'rw',
-    isa     => 'Int',
-    default => 0,
-);
+has _request_id => 0;
 
 =head1 METHODS
 
@@ -542,8 +484,6 @@ sub all {
     return @ret;
 }
 
-no Any::Moose;
-__PACKAGE__->meta->make_immutable (inline_destructor => 0);
 
 1;
 

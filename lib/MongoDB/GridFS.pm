@@ -19,10 +19,11 @@ our $VERSION = '0.45';
 
 # ABSTRACT: A file storage utility
 
-use Any::Moose;
+use MongoDB::Base -base;
 use MongoDB::GridFS::File;
 use DateTime;
 use Digest::MD5;
+use Carp;
 
 =head1 NAME
 
@@ -56,11 +57,7 @@ The number of bytes per chunk.  Defaults to 1048576.
 
 $MongoDB::GridFS::chunk_size = 1048576;
 
-has _database => (
-    is       => 'ro',
-    isa      => 'MongoDB::Database',
-    required => 1,
-);
+has _database => sub{undef};
 
 =head2 prefix
 
@@ -68,11 +65,7 @@ The prefix used for the collections.  Defaults to "fs".
 
 =cut
 
-has prefix => (
-    is      => 'ro',
-    isa     => 'Str',
-    default => 'fs'
-);
+has prefix => 'fs';
 
 =head2 files
 
@@ -81,17 +74,11 @@ length fields, plus user-defined metadata (and an _id).
 
 =cut
 
-has files => (
-    is => 'ro',
-    isa => 'MongoDB::Collection',
-    lazy_build => 1
-);
-
-sub _build_files {
+has files => sub {
     my $self = shift;
     my $coll = $self->_database->get_collection($self->prefix . '.files');
     return $coll;
-}
+};
 
 =head2 chunks
 
@@ -101,17 +88,11 @@ in the files collection it belongs to).
 
 =cut
 
-has chunks => (
-    is => 'ro',
-    isa => 'MongoDB::Collection',
-    lazy_build => 1
-);
-
-sub _build_chunks {
+has chunks => sub {
     my $self = shift;
     my $coll = $self->_database->get_collection($self->prefix . '.chunks');
     return $coll;
-}
+};
 
 sub _ensure_indexes {
     my $self = shift;

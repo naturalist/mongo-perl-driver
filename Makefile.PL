@@ -7,14 +7,10 @@ name 'MongoDB';
 perl_version '5.8.4';
 author 'Florian Ragwitz <rafl@debian.org>';
 author 'Kristina Chodorow <kristina@10gen.com>';
+author 'minimalist <minimalist@lavabit.com>';
 license 'Apache';
 all_from 'lib/MongoDB.pm';
 
-requires 'Any::Moose';
-# C::M::Modifiers isn't always needed. It'll be used only if Any::Moose decides
-# to use Mouse instead of Moose. We depend on it anyway to make sure it's there
-# when it's needed.
-requires 'Class::Method::Modifiers';
 requires 'Digest::MD5';
 requires 'Tie::IxHash';
 requires 'DateTime';

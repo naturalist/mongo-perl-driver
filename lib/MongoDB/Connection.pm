@@ -22,8 +22,7 @@ our $VERSION = '0.45';
 use MongoDB;
 use MongoDB::Cursor;
 
-use Any::Moose;
-use Any::Moose 'Util::TypeConstraints';
+use MongoDB::Base -base;
 use Digest::MD5;
 use Tie::IxHash;
 use boolean;
@@ -92,12 +91,7 @@ using the C<db_name> property, it will be used instead.
 
 =cut
 
-has host => (
-    is       => 'ro',
-    isa      => 'Str',
-    required => 1,
-    default  => 'mongodb://localhost:27017',
-);
+has host => 'mongodb://localhost:27017';
 
 =head2 w
 
@@ -138,11 +132,7 @@ safe insert times out and croaks.
 
 =cut
 
-has w => (
-    is      => 'rw',
-    isa     => 'Int',
-    default => 1,
-);
+has w => 1;
 
 =head2 wtimeout
 
@@ -155,40 +145,17 @@ See C<w> above for more information.
 
 =cut
 
-has wtimeout => (
-    is      => 'rw',
-    isa     => 'Int',
-    default => 1000,
-);
+has wtimeout => 1000;
 
-has port => (
-    is       => 'ro',
-    isa      => 'Int',
-    required => 1,
-    default  => 27017,
-);
+has port => 27017;
 
-has left_host => (
-    is       => 'ro',
-    isa      => 'Str',
-);
+has left_host => sub { undef };
 
-has left_port => (
-    is       => 'ro',
-    isa      => 'Int',
-    default  => 27017,
-);
+has left_port => 27017;
 
-has right_host => (
-    is       => 'ro',
-    isa      => 'Str',
-);
+has right_host => sub { undef };
 
-has right_port => (
-    is       => 'ro',
-    isa      => 'Int',
-    default  => 27017,
-);
+has right_port => 27017;
 
 =head2 auto_reconnect
 
@@ -197,12 +164,7 @@ interrupted. Defaults to C<1>.
 
 =cut
 
-has auto_reconnect => (
-    is       => 'ro',
-    isa      => 'Bool',
-    required => 1,
-    default  => 1,
-);
+has auto_reconnect => 1;
 
 =head2 auto_connect
 
@@ -211,12 +173,7 @@ construction. Defaults to C<1>.
 
 =cut
 
-has auto_connect => (
-    is       => 'ro',
-    isa      => 'Bool',
-    required => 1,
-    default  => 1,
-);
+has auto_connect => 1;
 
 =head2 timeout
 
@@ -224,12 +181,7 @@ Connection timeout in milliseconds. Defaults to C<20000>.
 
 =cut
 
-has timeout => (
-    is       => 'ro',
-    isa      => 'Int',
-    required => 1,
-    default  => 20000,
-);
+has timeout => 20000;
 
 =head2 username
 
@@ -238,11 +190,7 @@ set, the connection will attempt to authenticate on connection/reconnection.
 
 =cut
 
-has username => (
-    is       => 'rw',
-    isa      => 'Str',
-    required => 0,
-);
+has username => sub{undef};
 
 =head2 password
 
@@ -251,11 +199,7 @@ set, the connection will attempt to authenticate on connection/reconnection.
 
 =cut
 
-has password => (
-    is       => 'rw',
-    isa      => 'Str',
-    required => 0,
-);
+has password => sub{undef};
 
 =head2 db_name
 
@@ -266,12 +210,7 @@ authenticate against this database on connection/reconnection.  Defaults to
 
 =cut
 
-has db_name => (
-    is       => 'rw',
-    isa      => 'Str',
-    required => 1,
-    default  => 'admin',
-);
+has db_name => 'admin';
 
 =head2 query_timeout
 
@@ -302,12 +241,7 @@ This value overrides L<MongoDB::Cursor/timeout>.
 
 =cut
 
-has query_timeout => (
-    is       => 'rw',
-    isa      => 'Int',
-    required => 1,
-    default  => sub { return $MongoDB::Cursor::timeout; },
-);
+has query_timeout => sub { $MongoDB::Cursor::timeout };
 
 =head2 max_bson_size
 
@@ -316,12 +250,7 @@ MongoDB on connection to determine this value.  It defaults to 4MB.
 
 =cut
 
-has max_bson_size => (
-    is       => 'rw',
-    isa      => 'Int',
-    required => 1,
-    default  => 4194304
-);
+has max_bson_size => 4194304;
 
 =head2 find_master
 
@@ -356,33 +285,16 @@ in the C<passives> field, and arbiters are in the C<arbiters> field.
 
 =cut
 
-has find_master => (
-    is       => 'ro',
-    isa      => 'Bool',
-    required => 1,
-    default  => 0,
-);
+has find_master => 0;
 
 # hash of servers in a set
 # call connected() to determine if a connection is enabled
-has _servers => (
-    is       => 'rw',
-    isa      => 'HashRef',
-    default => sub { {} },
-);
+has _servers => sub { {} };
 
 # actual connection to a server in the set
-has _master => (
-    is       => 'rw',
-#    isa      => 'MongoDB::Connection',
-    required => 0,
-);
+has _master => sub{undef};
 
-has ts => (
-    is      => 'rw',
-    isa     => 'Int',
-    default => 0
-);
+has ts => 0;
 
 =head2 port [deprecated]
 
@@ -427,8 +339,12 @@ sub AUTOLOAD {
     return $self->get_database($db);
 }
 
-sub BUILD {
-    my ($self, $opts) = @_;
+sub DESTROY {};
+
+sub new {
+    my $class = shift;
+    my $self  = $class->SUPER::new(@_);
+
     eval "use ${_}" # no Any::Moose::load_class becase the namespaces already have symbols from the xs bootstrap
         for qw/MongoDB::Database MongoDB::Cursor MongoDB::OID MongoDB::Timestamp MongoDB::DateTime/;
 
@@ -462,17 +378,20 @@ sub BUILD {
             $self->connect;
             $self->max_bson_size($self->_get_max_bson_size);
         }
-        return;
+        return $self;
     }
 
     # multiple servers
     my $connected = 0;
-    $opts->{find_master} = 0;
-    $opts->{auto_connect} = 0;
     foreach (@pairs) {
-        $opts->{host} = "mongodb://$_";
 
-        $self->_servers->{$_} = MongoDB::Connection->new($opts);
+        $self->_servers->{$_} = MongoDB::Connection->new(
+            {
+                find_master  => 0,
+                auto_connect => 0,
+                host         => "mongodb://$_"
+            }
+        );
 
         next unless $self->auto_connect;
 
@@ -512,6 +431,8 @@ sub BUILD {
 
     # create a struct that just points to the master's connection
     $self->_init_conn_holder($master);
+
+    return $self;
 }
 
 sub _get_max_bson_size {
@@ -764,8 +685,6 @@ C<$info> hash will be automatically created for you by L<MongoDB::write_query>.
 
 =cut
 
-no Any::Moose;
-__PACKAGE__->meta->make_immutable (inline_destructor => 0);
 
 1;
 

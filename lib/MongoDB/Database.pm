@@ -19,14 +19,11 @@ our $VERSION = '0.45';
 
 # ABSTRACT: A Mongo Database
 
-use Any::Moose;
+use MongoDB::Base -base;
 use MongoDB::GridFS;
+use MongoDB::Collection;
 
-has _connection => (
-    is       => 'ro',
-    isa      => 'MongoDB::Connection',
-    required => 1,
-);
+has _connection => sub{undef};
 
 =head1 NAME
 
@@ -54,11 +51,7 @@ The name of the database.
 
 =cut
 
-has name => (
-    is       => 'ro',
-    isa      => 'Str',
-    required => 1,
-);
+has name => sub{undef};
 
 
 sub AUTOLOAD {
@@ -71,10 +64,8 @@ sub AUTOLOAD {
     return $self->get_collection($coll);
 }
 
-sub BUILD {
-    my ($self) = @_;
-    Any::Moose::load_class("MongoDB::Collection");
-}
+sub DESTROY {};
+
 
 =head1 METHODS
 
@@ -325,8 +316,6 @@ sub eval {
     }
 }
 
-no Any::Moose;
-__PACKAGE__->meta->make_immutable;
 
 1;
 

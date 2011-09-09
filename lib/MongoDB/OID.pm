@@ -18,7 +18,7 @@ package MongoDB::OID;
 our $VERSION = '0.45';
 # ABSTRACT: A Mongo Object ID
 
-use Any::Moose;
+use MongoDB::Base -base;
 
 =head1 NAME
 
@@ -26,12 +26,12 @@ MongoDB::OID - A Mongo ObjectId
 
 =head1 SYNOPSIS
 
-If no C<_id> field is provided when a document is inserted into the database, an 
+If no C<_id> field is provided when a document is inserted into the database, an
 C<_id> field will be added with a new C<MongoDB::OID> as its value.
 
     my $id = $collection->insert({'name' => 'Alice', age => 20});
 
-C<$id> will be a C<MongoDB::OID> that can be used to retreive or update the 
+C<$id> will be a C<MongoDB::OID> that can be used to retreive or update the
 saved document:
 
     $collection->update({_id => $id}, {'age' => {'$inc' => 1}});
@@ -56,31 +56,24 @@ Core documentation on object ids: L<http://dochub.mongodb.org/core/objectids>.
 =head2 value
 
 The OID value. A random value will be generated if none exists already.
-It is a 24-character hexidecimal string (12 bytes).  
+It is a 24-character hexidecimal string (12 bytes).
 
 Its string representation is the 24-character string.
 
 =cut
 
-has value => (
-    is      => 'ro',
-    isa     => 'Str',
-    required => 1,
-    builder => 'build_value',
-);
-
-sub BUILDARGS { 
-    my $class = shift; 
-    return $class->SUPER::BUILDARGS(flibble => @_)
-        if @_ % 2; 
-    return $class->SUPER::BUILDARGS(@_); 
+sub new {
+    my $class = shift;
+    return $class->SUPER::new( flibble => @_ ) if @_ % 2;
+    return $class->SUPER::new(@_);
 }
 
 sub build_value {
     my $self = shift;
-
-    _build_value($self, @_ ? @_ : ());
+    _build_value( $self, @_ ? @_ : () );
 }
+
+has value => \&build_value;
 
 =head1 METHODS
 
@@ -102,7 +95,7 @@ sub to_string {
     my $date = DateTime->from_epoch(epoch => $id->get_time);
 
 Each OID contains a 4 bytes timestamp from when it was created.  This method
-extracts the timestamp.  
+extracts the timestamp.
 
 =cut
 
@@ -125,8 +118,8 @@ sub get_time {
     $json->encode(MongoDB::OID->new);
 
 Returns a JSON string for this OID.  This is compatible with the strict JSON
-representation used by MongoDB, that is, an OID with the value 
-"012345678901234567890123" will be represented as 
+representation used by MongoDB, that is, an OID with the value
+"012345678901234567890123" will be represented as
 C<{"$oid" : "012345678901234567890123"}>.
 
 =cut
@@ -140,8 +133,6 @@ use overload
     '""' => \&to_string,
     'fallback' => 1;
 
-no Any::Moose;
-__PACKAGE__->meta->make_immutable;
 
 1;
 

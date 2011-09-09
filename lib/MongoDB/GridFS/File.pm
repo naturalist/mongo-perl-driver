@@ -19,7 +19,7 @@ our $VERSION = '0.45';
 
 # ABSTRACT: A Mongo GridFS file
 
-use Any::Moose;
+use MongoDB::Base -base;
 use MongoDB::GridFS;
 use IO::File;
 
@@ -37,11 +37,7 @@ MongoDB::GridFS::File - A Mongo GridFS file
 
 =cut
 
-has _grid => (
-    is       => 'ro',
-    isa      => 'MongoDB::GridFS',
-    required => 1,
-);
+has _grid => sub{undef};
 
 =head1 ATTRIBUTES
 
@@ -51,11 +47,7 @@ A hash of info information saved with this file.
 
 =cut
 
-has info => (
-    is => 'ro',
-    isa => 'HashRef',
-    required => 1,
-);
+has info => sub{{}};
 
 =head1 METHODS
 
@@ -63,7 +55,7 @@ has info => (
 
     $written = $file->print($fh, 50, 200);
 
-Writes the number of bytes specified from the offset specified 
+Writes the number of bytes specified from the offset specified
 to the given file handle.  If no C<$length> or C<$offset> are
 given, the entire file is written to C<$fh>.  Returns the number
 of bytes written.
