@@ -16,6 +16,7 @@ requires 'Tie::IxHash';
 requires 'DateTime';
 requires 'XSLoader';
 requires 'boolean';
+test_requires 'Module::Install';
 test_requires 'Test::Exception';
 test_requires 'Tie::IxHash';
 test_requires 'DateTime';
